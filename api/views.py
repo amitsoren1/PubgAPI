@@ -88,3 +88,143 @@ class ListMatches(APIView):
         resp['id'] = response['data']['id']
         resp['status'] = response['data']['attributes']['seasonState']
         return Response(resp)
+
+class ListTournaments(APIView):
+    team = {
+        "acronym": None,
+        "id": None,
+        "image_url": None,
+        "location": None,
+        "modified_at": None,
+        "name": None,
+        "slug": None
+      }
+    match = {
+        "begin_at": None,
+        "detailed_stats": None,
+        "draw": None,
+        "end_at": None,
+        "forfeit": None,
+        "game_advantage": None,
+        "id": None,
+        "live": {
+          "opens_at": None,
+          "supported": None,
+          "url": None
+                },
+        "live_embed_url": None,
+        "live_url": None,
+        "match_type": None,
+        "modified_at": None,
+        "name": None,
+        "number_of_games": None,
+        "official_stream_url": None,
+        "original_scheduled_at": None,
+        "rescheduled": None,
+        "scheduled_at": None,
+        "slug": None,
+        "status": None,
+        "streams": {
+          "english": {
+            "embed_url": None,
+            "raw_url": None
+          },
+          "russian": {
+            "embed_url": None,
+            "raw_url": None
+          }
+        },
+        "tournament_id": None,
+        "winner_id": None
+      }
+
+    tour =   {
+    "begin_at": None,
+    "end_at": None,
+    "id": None,
+    "league": {
+      "id": None,
+      "image_url": None,
+      "modified_at": None,
+      "name": None,
+      "slug": None,
+      "url": "https://www.pubg.com/"
+                },
+    "league_id": None,
+    "live_supported": None,
+    "matches": [],
+    "modified_at": None,
+    "name": None,
+    "prizepool": None,
+    "serie": {
+      "begin_at": None,
+      "description": None,
+      "end_at": None,
+      "full_name": None,
+      "id": None,
+      "league_id": None,
+      "modified_at": None,
+      "name": None,
+      "season": None,
+      "slug": None,
+      "tier": None,
+      "winner_id": None,
+      "winner_type": None,
+      "year": None
+    },
+    "serie_id": None,
+    "slug": None,
+    "teams": [],
+    "videogame": {
+      "id": None,
+      "name": "PUBG",
+      "slug": "pubg"
+    },
+    "winner_id": None,
+    "winner_type": None
+  }
+    '''def get_tournament(self,tournament_id):
+        new_tour = self.tour
+        url = f"https://api.pubg.com/shards/tournaments/{tournament_id}"
+        response = requests.get(url, headers=header)
+        response = json.loads(response.text)
+        for match in response["data"]["relationships"]["matches"]["data"]:
+            '''
+    def get_match(self,match_id):
+        new_match = self.match
+        url = f"https://api.pubg.com/shards/tournament/matches/{match_id}"
+        response = requests.get(url, headers=header)
+        response = json.loads(response.text)
+        #print(response["data"]["attributes"]["createdAt"])
+        new_match["id"] = response["data"]["id"]
+        new_match["begin_at"] = response["data"]["attributes"]["createdAt"]
+        new_match["detailed_stats"] = response["data"]["attributes"]["stats"]
+        #print(new_match)
+        return new_match
+
+    def get_matches(self,tournament_id):
+        url = f"https://api.pubg.com/tournaments/{tournament_id}"
+        response = requests.get(url, headers=header)
+        response = json.loads(response.text)
+        matches = []
+        for resp in response["data"]["relationships"]["matches"]["data"]:
+            match = self.get_match(resp["id"])
+            matches.append(match.copy())
+        return matches
+
+    def get(self,request):
+        url = f"https://api.pubg.com/tournaments"
+        response = requests.get(url, headers=header)
+        if response.status_code == 404:
+            response = json.loads(response.text)
+            return Response(response,status.HTTP_404_NOT_FOUND)
+        response = json.loads(response.text)
+        resp = []
+        for tournament in response["data"]:
+            new_tour = self.tour
+            new_tour["begin_at"] = tournament["attributes"]["createdAt"]
+            new_tour["serie"]["begin_at"] = tournament["attributes"]["createdAt"]
+            new_tour["id"] = tournament["id"]
+            new_tour["matches"] = self.get_matches(tournament["id"])
+            resp.append(new_tour)
+        return Response(resp)
