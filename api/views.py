@@ -221,7 +221,7 @@ class ListTournaments(APIView):
             return Response(response,status.HTTP_404_NOT_FOUND)
         response = json.loads(response.text)
         resp = []
-        i=0
+        #i=0
         for tournament in response["data"]:
             new_tour = self.tour
             new_tour["begin_at"] = tournament["attributes"]["createdAt"]
@@ -229,9 +229,9 @@ class ListTournaments(APIView):
             new_tour["id"] = tournament["id"]
             new_tour["matches"] = self.get_matches(tournament["id"])
             resp.append(new_tour)
-            i+=1
+            '''i+=1
             if i ==2:
-              break
+              break'''
         return Response(resp)
 
 class ListMatches(APIView):
@@ -369,32 +369,23 @@ class ListMatches(APIView):
     "winner_id": None
   }
   def get_tournament(self,tournament):
-    local_tournament = {
-      "begin_at": None,
-      "end_at": None,
-      "id": None,
-      "league_id": None,
-      "live_supported": None,
-      "modified_at": None,
-      "name": None,
-      "prizepool": None,
-      "serie_id": None,
-      "slug": None,
-      "winner_id": None,
-      "winner_type": None
-    }
-    local_tournament["begin_at"] = tournament["begin_at"]
-    local_tournament["end_at"] = tournament["end_at"]
-    local_tournament["id"] = tournament["id"]
-    local_tournament["league_id"] = tournament["league_id"]
-    local_tournament["live_supported"] = tournament["live_supported"]
-    local_tournament["modified_at"] = tournament["modified_at"]
-    local_tournament["name"] = tournament["name"]
-    local_tournament["prizepool"] = tournament["prizepool"]
-    local_tournament["serie_id"] = tournament["serie_id"]
-    local_tournament["slug"] = tournament["slug"]
-    local_tournament["winner_id"] = tournament["winner_id"]
-    local_tournament["winner_type"] = tournament["winner_type"]
+    local_tournament = {}
+    attrs = [
+      "begin_at",
+      "end_at",
+      "id",
+      "league_id",
+      "live_supported",
+      "modified_at",
+      "name",
+      "prizepool",
+      "serie_id",
+      "slug",
+      "winner_id",
+      "winner_type"
+      ]
+    for attr in attrs:
+      local_tournament[attr] = tournament[attr]
     return local_tournament.copy()
 
   def get(self,request):
@@ -402,32 +393,43 @@ class ListMatches(APIView):
     response = requests.get(url)
     response = json.loads(response.text)
     matches = []
+    match_attributes = [
+      "begin_at",
+      "detailed_stats",
+      "id",
+      "live",
+      "live_embed_url",
+      "live_url",
+      "match_type",
+      "modified_at",
+      "name",
+      "number_of_games",
+      "official_stream_url",
+      "original_scheduled_at",
+      "rescheduled",
+      "scheduled_at",
+      "slug",
+      "status",
+      "streams",
+      "tournament_id",
+      "winner_id",
+    ]
+    tournament_attributes = [
+      "league",
+      "league_id",
+      "serie",
+      "serie_id",
+      "tournament",
+    ]
     for tournament in response:
       for local_match in tournament["matches"]:
         new_match = self.match.copy()
-        new_match["begin_at"] = local_match["begin_at"]
-        new_match["detailed_stats"] = local_match["detailed_stats"]
-        new_match["id"] = local_match["id"]
-        new_match["league"] = tournament["league"]
-        new_match["league_id"] = tournament["league_id"]
-        new_match["live"] = local_match["live"]
-        new_match["live_embed_url"] = local_match["live_embed_url"]
-        new_match["live_url"] = local_match["live_url"]
-        new_match["match_type"] = local_match["match_type"]
-        new_match["modified_at"] = local_match["modified_at"]
-        new_match["name"] = local_match["name"]
-        new_match["number_of_games"] = local_match["number_of_games"]
-        new_match["official_stream_url"] = local_match["official_stream_url"]
-        new_match["original_scheduled_at"] = local_match["original_scheduled_at"]
-        new_match["rescheduled"] = local_match["rescheduled"]
-        new_match["scheduled_at"] = local_match["scheduled_at"]
-        new_match["serie"] = tournament["serie"]
-        new_match["serie_id"] = tournament["serie_id"]
-        new_match["slug"] = local_match["slug"]
-        new_match["status"] = local_match["status"]
-        new_match["streams"] = local_match["streams"]
-        new_match["tournament"] = self.get_tournament(tournament)
-        new_match["tournament_id"] = local_match["tournament_id"]
-        new_match["winner_id"] = local_match["winner_id"]
+        for attr in match_attributes:
+          new_match[attr] = local_match[attr]
+        for attr in tournament_attributes:
+          if attr!="tournament":
+            new_match[attr] = tournament[attr]
+          else:
+            new_match[attr] = self.get_tournament(tournament)
         matches.append(new_match.copy())
     return Response(matches)
