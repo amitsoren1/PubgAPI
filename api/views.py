@@ -5,7 +5,7 @@ import requests
 import json
 from rest_framework import status
 from django.conf.urls import url
-
+from api.models import Tournament,Match
 
 HEADER = {
   "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJhZGVhMzQwMC1hZDhhLTAxMzgtM2IyMS0xYmJkOWE0ZjQyNzEiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNTk1MzQwOTgzLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Imx1Y2lmZXJoZWxsNjA2In0.NwsthIsl-D6uuiI0a7zwwk6gJrY1MeYwUudtCJYRXJc",
@@ -193,9 +193,9 @@ class ListTournaments(APIView):
             '''
     def get_match(self,match_id):
         new_match = self.match
-        url = f"https://api.pubg.com/shards/tournament/matches/{match_id}"
-        response = requests.get(url, headers=HEADER)
-        response = json.loads(response.text)
+        #url = f"https://api.pubg.com/shards/tournament/matches/{match_id}"
+        response = Match.objects.filter(match_id=match_id).first()
+        response = json.loads(response.match)
         #print(response["data"]["attributes"]["createdAt"])
         new_match["id"] = response["data"]["id"]
         new_match["begin_at"] = response["data"]["attributes"]["createdAt"]
@@ -204,33 +204,28 @@ class ListTournaments(APIView):
         return new_match
 
     def get_matches(self,tournament_id):
-        url = f"https://api.pubg.com/tournaments/{tournament_id}"
-        response = requests.get(url, headers=HEADER)
-        response = json.loads(response.text)
+        #url = f"https://api.pubg.com/tournaments/{tournament_id}"
+        response = Match.objects.all().filter(tour_id=tournament_id)
         matches = []
-        for resp in response["data"]["relationships"]["matches"]["data"]:
-            match = self.get_match(resp["id"])
+        for resp in response:
+            match = self.get_match(resp.match_id)
             matches.append(match.copy())
         return matches
 
     def get(self,request):
-        url = f"https://api.pubg.com/tournaments"
-        response = requests.get(url, headers=HEADER)
-        if response.status_code == 404:
-            response = json.loads(response.text)
-            return Response(response,status.HTTP_404_NOT_FOUND)
-        response = json.loads(response.text)
         resp = []
-        #i=0
-        for tournament in response["data"]:
+        i=0
+        tournaments = Tournament.objects.all()
+        for obj in tournaments:
+            tournament = json.loads(obj.tournament)
             new_tour = self.tour
             new_tour["begin_at"] = tournament["attributes"]["createdAt"]
             new_tour["serie"]["begin_at"] = tournament["attributes"]["createdAt"]
             new_tour["id"] = tournament["id"]
             new_tour["matches"] = self.get_matches(tournament["id"])
-            resp.append(new_tour)
-            '''i+=1
-            if i ==2:
+            resp.append(new_tour.copy())
+            i+=1
+            '''if i ==2:
               break'''
         return Response(resp)
 
