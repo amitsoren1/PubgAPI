@@ -4,7 +4,9 @@ from rest_framework.response import Response
 import requests
 import json
 from rest_framework import status
+from django.conf import settings
 from django.conf.urls import url
+from django.urls import reverse
 from api.models import Tournament,Match
 
 HEADER = {
@@ -384,7 +386,7 @@ class ListMatches(APIView):
     return local_tournament.copy()
 
   def get(self,request):
-    url = "http://127.0.0.1:8000/tournaments"
+    url = "http://"+f"{settings.ALLOWED_HOSTS[0]}"+":8000/tournaments"
     response = requests.get(url)
     response = json.loads(response.text)
     matches = []
