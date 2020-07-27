@@ -1,4 +1,4 @@
-from .views import ListUsers,ListMatches,ListTournaments,ListMatch
+from api.views import ListUsers,ListMatches,ListTournaments,ListMatch,ListPlayers
 from django.urls import path
 
 app_name = "api"
@@ -9,4 +9,5 @@ urlpatterns = [
     path('match/<str:match_id>',ListMatch.as_view()),
     path('tournaments/',ListTournaments.as_view()),
     path('matches/',ListMatches.as_view()),
+    path('players/',ListPlayers.as_view())
 ]
