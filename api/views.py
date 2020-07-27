@@ -7,7 +7,7 @@ from rest_framework import status
 from django.conf import settings
 from django.conf.urls import url
 from django.urls import reverse
-from api.models import Tournament,Match
+from api.models import Tournament,Match,Player
 
 HEADER = {
   "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJqdGkiOiJhZGVhMzQwMC1hZDhhLTAxMzgtM2IyMS0xYmJkOWE0ZjQyNzEiLCJpc3MiOiJnYW1lbG9ja2VyIiwiaWF0IjoxNTk1MzQwOTgzLCJwdWIiOiJibHVlaG9sZSIsInRpdGxlIjoicHViZyIsImFwcCI6Imx1Y2lmZXJoZWxsNjA2In0.NwsthIsl-D6uuiI0a7zwwk6gJrY1MeYwUudtCJYRXJc",
@@ -430,3 +430,49 @@ class ListMatches(APIView):
             new_match[attr] = self.get_tournament(tournament)
         matches.append(new_match.copy())
     return Response(matches)
+
+class ListPlayers(APIView):
+  player = {
+            "birth_year": None,
+            "birthday": None,
+            "current_team": {
+              "acronym": None,
+              "id": None,
+              "image_url": None,
+              "location": None,
+              "modified_at": None,
+              "name": None,
+              "slug": None,
+            },
+            "current_videogame": {
+              "id": None,
+              "name": "PUBG",
+              "slug": "pubg"
+            },
+            "first_name": None,
+            "hometown": None,
+            "id": None,
+            "image_url": None,
+            "last_name": None,
+            "name": None,
+            "nationality": None,
+            "role": None,
+            "slug": None,
+          }
+  def get_player(self,player):
+    try:
+      new_player = self.player
+      player = json.loads(player.text)
+      new_player["id"] = player["data"][0]["id"]
+      new_player["name"] = player["data"][0]["attributes"]["name"]
+      return new_player.copy()
+    except:
+      return None
+
+  def get(self,request):
+    players = Player.objects.all()
+    response = []
+    for player in players:
+      obj = self.get_player(player)
+      response.append(obj)
+    return Response(response)
