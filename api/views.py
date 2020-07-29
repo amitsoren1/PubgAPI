@@ -16,7 +16,7 @@ HEADER = {
 
 platform = ["console","kakao","psn","stadia","steam","tournament","xbox"]
 
-class ListUsers(APIView):
+class List1User(APIView):
     def get(self, request,user_id=None):
         url = f"https://api.pubg.com/shards/steam/players/{user_id}"
         response = requests.get(url, headers=HEADER)
@@ -44,7 +44,7 @@ class ListUsers(APIView):
         resp['name'] = response['data']['attributes']['name']
         return Response(resp)
 
-class ListMatch(APIView):
+class List1Match(APIView):
     def get(self, request,match_id=None):
         url = f"https://api.pubg.com/shards/tournament/matches/{match_id}"
         response = requests.get(url, headers=HEADER)
@@ -202,8 +202,11 @@ class ListTournaments(APIView):
         new_match["id"] = response["data"]["id"]
         new_match["begin_at"] = response["data"]["attributes"]["createdAt"]
         new_match["detailed_stats"] = response["data"]["attributes"]["stats"]
-        #print(new_match)
-        return new_match
+        for participant in response["included"]:
+          if participant["type"] == "roster":
+            if participant["attributes"]["won"] == "true":
+              new_match["winner_id"] = participant["attributes"]["stats"]["teamId"]
+        return new_match.copy()
 
     def get_matches(self,tournament_id):
         #url = f"https://api.pubg.com/tournaments/{tournament_id}"
@@ -211,7 +214,8 @@ class ListTournaments(APIView):
         matches = []
         for resp in response:
             match = self.get_match(resp.match_id)
-            matches.append(match.copy())
+            match["tournament_id"] = tournament_id
+            matches.append(match)
         return matches
 
     def get(self,request):
