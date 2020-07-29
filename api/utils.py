@@ -94,4 +94,3 @@ class UpdateData():
                                 print(account_id, u'\u2713')
                         except:
                             pass
-            break
